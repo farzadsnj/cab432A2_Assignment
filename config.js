@@ -54,28 +54,35 @@ const loadConfig = async () => {
         awsAccessKeyId: secrets.awsAccessKeyId || process.env.AWS_ACCESS_KEY_ID,
         awsSecretAccessKey: secrets.awsSecretAccessKey || process.env.AWS_SECRET_ACCESS_KEY,
         awsSessionToken: secrets.awsSessionToken || process.env.AWS_SESSION_TOKEN,
-        cognitoClientId: secrets.cognitoClientId || process.env.COGNITO_CLIENT_ID,
-        cognitoUserPoolId: secrets.cognitoUserPoolId || process.env.COGNITO_USER_POOL_ID,
+        // cognitoClientId: secrets.cognitoClientId || process.env.COGNITO_CLIENT_ID,
+        // cognitoUserPoolId: secrets.cognitoUserPoolId || process.env.COGNITO_USER_POOL_ID,
      };
 
      console.log("AWS Access Key ID:", secrets.awsAccessKeyId);
 
-     if (!secrets.awsAccessKeyId || !secrets.awsSecretAccessKey) {
-        console.error("AWS credentials are missing. Please check your secrets or environment variables.");
-        throw new Error("AWS credentials are missing.");
-     }
+    //  if (!secrets.awsAccessKeyId || !secrets.awsSecretAccessKey) {
+    //     console.error("AWS credentials are missing. Please check your secrets or environment variables.");
+    //     throw new Error("AWS credentials are missing.");
+    //  }
 
      const s3BucketName = await getParameter(process.env.S3_BUCKET_PARAM_NAME || "/app/s3/n11521147-a2");
 
-     return {
-        awsAccessKeyId: secrets.awsAccessKeyId,
-        awsSecretAccessKey: secrets.awsSecretAccessKey,
-        awsSessionToken: secrets.awsSessionToken,
-        awsRegion: awsRegion,
-        cognitoClientId: secrets.cognitoClientId,
-        cognitoUserPoolId: secrets.cognitoUserPoolId,
-        s3BucketName,
-     };
+    //  return {
+    //     awsAccessKeyId: secrets.awsAccessKeyId,
+    //     awsSecretAccessKey: secrets.awsSecretAccessKey,
+    //     awsSessionToken: secrets.awsSessionToken,
+    //     awsRegion: awsRegion,
+    //     cognitoClientId: secrets.cognitoClientId,
+    //     cognitoUserPoolId: secrets.cognitoUserPoolId,
+    //     s3BucketName,
+    //  };
+    return {
+      awsRegion: awsRegion,
+      cognitoClientId: secrets.cognitoClientId,
+      cognitoUserPoolId: secrets.cognitoUserPoolId,
+      s3BucketName,
+    };
+    
   } catch (error) {
      console.error("Error loading configuration:", error);
      throw new Error("Failed to load configuration.");
