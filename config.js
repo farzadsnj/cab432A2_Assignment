@@ -77,11 +77,17 @@ const loadConfig = async () => {
     //     s3BucketName,
     //  };
     return {
+      awsAccessKeyId: secrets.awsAccessKeyId || process.env.AWS_ACCESS_KEY_ID,
+      awsSecretAccessKey: secrets.awsSecretAccessKey || process.env.AWS_SECRET_ACCESS_KEY,
+      awsSessionToken: secrets.awsSessionToken || process.env.AWS_SESSION_TOKEN,
       awsRegion: awsRegion,
       cognitoClientId: secrets.cognitoClientId,
       cognitoUserPoolId: secrets.cognitoUserPoolId,
       s3BucketName,
-    };
+    };    
+    console.log('AWS Access Key:', config.awsAccessKeyId);
+    console.log('AWS Secret Access Key:', config.awsSecretAccessKey);
+
     
   } catch (error) {
      console.error("Error loading configuration:", error);
