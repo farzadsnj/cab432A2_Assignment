@@ -2,7 +2,8 @@ const ffmpeg = require("fluent-ffmpeg");
 const path = require("path");
 const os = require("os");
 const { saveProgress, getProgress, updateProgress } = require("./db/database");
-const redisClient = require("./redisClient"); 
+const redisClient = require("./redisClient");
+const { getObjectFromS3 } = require('./routes/s3_upload');
 
 const transcodeVideoWithProgress = async (fileName, progressId, username) => {
   return new Promise(async (resolve, reject) => {

@@ -20,6 +20,7 @@ const initializeS3 = async () => {
     const config = await loadConfig();
     s3Client = new S3Client({
       region: config.awsRegion,
+      logger: console,
     });
     bucketName = config.s3BucketName;
     console.log('S3 client initialized successfully.');
@@ -83,6 +84,27 @@ const cleanUpFailedUpload = async (s3Key) => {
     console.log(`Partially uploaded file ${s3Key} deleted from S3.`);
   } catch (err) {
     console.error(`Failed to clean up failed upload for file ${s3Key}:`, err);
+  }
+};
+
+// Define getObjectFromS3 function
+const getObjectFromS3 = async (fileName, username) => {
+  try {
+    const s3Key = `${username}/${fileName}`;
+    const downloadParams = {
+      Bucket: bucketName,  // bucketName should be set in your config
+      Key: s3Key,
+    };
+
+    const command = new GetObjectCommand(downloadParams);
+    const s3Response = await s3Client.send(command);
+
+    console.log(`File fetched from S3 successfully: ${s3Key}`);
+    
+    return s3Response.Body;  // You can return the stream to handle it in other parts of the code
+  } catch (err) {
+    console.error(`Error retrieving file from S3: ${fileName}`, err);
+    throw new Error('Failed to retrieve file from S3');
   }
 };
 
