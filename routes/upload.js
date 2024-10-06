@@ -61,4 +61,31 @@ router.post('/', auth.authenticateToken, async (req, res) => {
   }
 });
 
+// Add this in upload.js or a new API route file
+router.get('/files', auth.authenticateToken, async (req, res) => {
+  const username = req.user.username;
+
+  try {
+    const files = await getFileMetadata(username); // Call the database function to get file metadata
+
+    if (files.length === 0) {
+      return res.status(200).json({
+        message: 'No files uploaded yet.',
+        files: []
+      });
+    }
+
+    res.status(200).json({
+      message: 'Files fetched successfully.',
+      files: files,
+    });
+  } catch (err) {
+    console.error('Error fetching files:', err);
+    res.status(500).json({
+      error: 'An internal error occurred while fetching files.',
+    });
+  }
+});
+
+
 module.exports = router;

@@ -1,41 +1,33 @@
-const redis = require('redis');
-const { loadConfig } = require('./config');
+const memjs = require('memjs');
+require('dotenv').config();
 
-let redisClient;
+let memcachedClient;
 
-const initializeRedisClient = async () => {
-    if (redisClient && redisClient.isOpen) {
-        return redisClient;
+const initializeMemcachedClient = async () => {
+    if (memcachedClient) {
+        return memcachedClient;
     }
 
     try {
-        //const config = await loadConfig();
-        const redisUrl = 'redis://n11521147-a22-ech.km2jzi.cfg.apse2.cache.amazonaws.com:6379';
-
-        redisClient = redis.createClient({
-            url: redisUrl,
-            socket: {
-                connectTimeout: 800000,
-            }
+        const memcachedEndpoint = process.env.MEMCACHED_ENDPOINT;
+        memcachedClient = memjs.Client.create(memcachedEndpoint, {
+            timeout: 1,   // Timeout after 1 second
+            retries: 10,  // Retry 10 times on failure
         });
 
-        redisClient.on('error', (err) => {
-            console.error('Redis connection error:', err);
-        });
-
-        await redisClient.connect();
-        console.log('Connected to Redis');
-        return redisClient;
+        console.log(`Connected to Memcached at ${memcachedEndpoint}`);
+        return memcachedClient;
     } catch (err) {
-        console.error('Error initializing Redis client:', err);
+        console.error('Error initializing Memcached client:', err);
         throw err;
     }
 };
 
 const cacheProgress = async (progressId, progressData) => {
     try {
-        const client = await initializeRedisClient();
-        await client.setEx(progressId, 3600, JSON.stringify(progressData));
+        const client = await initializeMemcachedClient();
+        const data = JSON.stringify(progressData);
+        await client.set(progressId, data, { expires: 3600 });  // Cache for 1 hour
         console.log(`Progress for ${progressId} cached successfully.`);
     } catch (err) {
         console.error(`Error caching progress for ${progressId}:`, err);
@@ -44,9 +36,9 @@ const cacheProgress = async (progressId, progressData) => {
 
 const getCachedProgress = async (progressId) => {
     try {
-        const client = await initializeRedisClient();
-        const progress = await client.get(progressId);
-        return progress ? JSON.parse(progress) : null;
+        const client = await initializeMemcachedClient();
+        const result = await client.get(progressId);
+        return result ? JSON.parse(result.value.toString()) : null;
     } catch (err) {
         console.error(`Error retrieving cached progress for ${progressId}:`, err);
         return null;
@@ -56,8 +48,9 @@ const getCachedProgress = async (progressId) => {
 const cacheFileMetadata = async (username, metadata) => {
     const key = `${username}_files`;
     try {
-        const client = await initializeRedisClient();
-        await client.setEx(key, 3600, JSON.stringify(metadata)); 
+        const client = await initializeMemcachedClient();
+        const data = JSON.stringify(metadata);
+        await client.set(key, data, { expires: 3600 });  // Cache for 1 hour
         console.log(`File metadata for ${username} cached successfully.`);
     } catch (err) {
         console.error(`Error caching file metadata for ${username}:`, err);
@@ -67,9 +60,9 @@ const cacheFileMetadata = async (username, metadata) => {
 const getCachedFileMetadata = async (username) => {
     const key = `${username}_files`;
     try {
-        const client = await initializeRedisClient();
-        const metadata = await client.get(key);
-        return metadata ? JSON.parse(metadata) : null;
+        const client = await initializeMemcachedClient();
+        const result = await client.get(key);
+        return result ? JSON.parse(result.value.toString()) : null;
     } catch (err) {
         console.error(`Error retrieving cached file metadata for ${username}:`, err);
         return null;
@@ -81,5 +74,5 @@ module.exports = {
     getCachedProgress,
     cacheFileMetadata,
     getCachedFileMetadata,
-    initializeRedisClient,
+    initializeMemcachedClient,
 };
