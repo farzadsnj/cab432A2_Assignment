@@ -8,11 +8,8 @@ const options = {
     concurrency: 50,  
     method: 'POST',
     headers: {
-        'Authorization': 'Bearer <YOUR_VALID_JWT_TOKEN>', 
+        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InFxIiwiaWF0IjoxNzI0OTgyMDY5LCJleHAiOjE3MjQ5ODU2Njl9.69iM2ISmOEnUueWXvNtTak8o7BFOSSg8FoMji7M13H8', 
     },
-    files: {
-        uploadFile: path.join(__dirname, 'uploads/video_2024-09-01_12-01-35.mp4')  
-    }
 };
 
 function simulateLoadTest() {

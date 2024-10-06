@@ -9,18 +9,20 @@ const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const { loadConfig } = require('../config.js');
 const fs = require('fs');
 const path = require('path');
-const { initializeMemcachedClient } = require('../redisClient'); // Assuming you are using Memcached for caching
 
 let s3Client;
 let bucketName;
 
-// Initialize S3
+// Initialize S3 Client
 const initializeS3 = async () => {
   try {
     const config = await loadConfig();
     s3Client = new S3Client({
-      region: config.awsRegion,
-      logger: console,
+      region: process.env.AWS_REGION,
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      },
     });
     bucketName = config.s3BucketName;
     console.log('S3 client initialized successfully.');
@@ -36,10 +38,7 @@ initializeS3();
 const uploadToS3 = async (filePath, username) => {
   let s3Key;
   try {
-    console.log('uploadToS3 called with filePath:', filePath);
-
     const normalizedFilePath = path.normalize(filePath);
-    console.log('Normalized file path:', normalizedFilePath);
 
     if (!fs.existsSync(normalizedFilePath)) {
       throw new Error('File path is invalid or file does not exist');
@@ -48,8 +47,6 @@ const uploadToS3 = async (filePath, username) => {
     const fileContent = fs.readFileSync(normalizedFilePath);
     const fileName = path.basename(normalizedFilePath);
     s3Key = `${username}/${fileName}`;
-
-    console.log('Uploading file to S3 with key:', s3Key);
 
     const uploadParams = {
       Bucket: bucketName,
@@ -61,67 +58,26 @@ const uploadToS3 = async (filePath, username) => {
     await s3Client.send(command);
 
     console.log(`File uploaded to S3 successfully: ${s3Key}`);
-
     return fileName;
   } catch (err) {
     console.error('Error uploading to S3:', err);
-    if (s3Key) {
-      await cleanUpFailedUpload(s3Key);
-    }
     throw new Error('Upload to S3 failed');
-  }
-};
-
-// Clean up failed upload
-const cleanUpFailedUpload = async (s3Key) => {
-  try {
-    const deleteParams = {
-      Bucket: bucketName,
-      Key: s3Key,
-    };
-    const command = new DeleteObjectCommand(deleteParams);
-    await s3Client.send(command);
-    console.log(`Partially uploaded file ${s3Key} deleted from S3.`);
-  } catch (err) {
-    console.error(`Failed to clean up failed upload for file ${s3Key}:`, err);
-  }
-};
-
-// Define getObjectFromS3 function
-const getObjectFromS3 = async (fileName, username) => {
-  try {
-    const s3Key = `${username}/${fileName}`;
-    const downloadParams = {
-      Bucket: bucketName,  // bucketName should be set in your config
-      Key: s3Key,
-    };
-
-    const command = new GetObjectCommand(downloadParams);
-    const s3Response = await s3Client.send(command);
-
-    console.log(`File fetched from S3 successfully: ${s3Key}`);
-    
-    return s3Response.Body;  // You can return the stream to handle it in other parts of the code
-  } catch (err) {
-    console.error(`Error retrieving file from S3: ${fileName}`, err);
-    throw new Error('Failed to retrieve file from S3');
   }
 };
 
 // Generate presigned upload URL
 const generatePresignedUploadUrl = async (fileName, username) => {
   try {
-    console.log(`Generating upload URL for file: ${fileName} and user: ${username}`);
     const s3Key = `${username}/${fileName}`;
     const uploadParams = {
       Bucket: bucketName,
       Key: s3Key,
       ContentType: 'application/octet-stream',
     };
-    console.log('S3 Upload Parameters:', uploadParams);
+
     const command = new PutObjectCommand(uploadParams);
     const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
-    console.log('Presigned URL generated successfully:', url);
+
     return url;
   } catch (err) {
     console.error('Error generating presigned upload URL:', err);
@@ -137,52 +93,14 @@ const generatePresignedDownloadUrl = async (fileName, username) => {
       Bucket: bucketName,
       Key: s3Key,
     };
+
     const command = new GetObjectCommand(downloadParams);
-    const url = await getSignedUrl(s3Client, command, {
-      expiresIn: 3600,
-    });
+    const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+
     return url;
   } catch (err) {
-    console.error('Error generating presigned download URL:', err);
+    console.error('Error generating download URL:', err);
     throw new Error('Failed to generate download URL');
-  }
-};
-
-// Get file from S3 and stream to response
-const getFileFromS3 = async (fileName, username, res) => {
-  try {
-    const s3Key = `${username}/${fileName}`;
-    const downloadParams = {
-      Bucket: bucketName,
-      Key: s3Key,
-    };
-    const command = new GetObjectCommand(downloadParams);
-    const s3Response = await s3Client.send(command);
-
-    res.setHeader('Content-Type', s3Response.ContentType || 'application/octet-stream');
-    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
-
-    s3Response.Body.pipe(res);
-  } catch (err) {
-    console.error(`Error retrieving file ${fileName} from S3:`, err);
-    throw new Error('Failed to retrieve file from S3');
-  }
-};
-
-// Delete file from S3
-const deleteFileFromS3 = async (fileName, username) => {
-  try {
-    const s3Key = `${username}/${fileName}`;
-    const deleteParams = {
-      Bucket: bucketName,
-      Key: s3Key,
-    };
-    const command = new DeleteObjectCommand(deleteParams);
-    await s3Client.send(command);
-    console.log(`File deleted from S3: ${s3Key}`);
-  } catch (err) {
-    console.error('Error deleting file from S3:', err);
-    throw err;
   }
 };
 
@@ -193,8 +111,10 @@ const listFilesInS3 = async (username) => {
       Bucket: bucketName,
       Prefix: `${username}/`,
     };
+
     const command = new ListObjectsV2Command(listParams);
     const response = await s3Client.send(command);
+
     return response.Contents.map((file) => file.Key);
   } catch (err) {
     console.error('Error listing files in S3:', err);
@@ -202,29 +122,9 @@ const listFilesInS3 = async (username) => {
   }
 };
 
-// Cache file metadata using Memcached
-const cacheFileMetadata = async (username, fileMetadata) => {
-  const memcachedClient = await initializeMemcachedClient(); // Initialize Memcached client
-  const cacheKey = `files:${username}`;
-  await memcachedClient.set(cacheKey, JSON.stringify(fileMetadata), { expires: 3600 }); // Cache for 1 hour
-  console.log(`File metadata cached for user: ${username}`);
-};
-
-// Get cached file metadata from Memcached
-const getCachedFileMetadata = async (username) => {
-  const memcachedClient = await initializeMemcachedClient(); // Initialize Memcached client
-  const cacheKey = `files:${username}`;
-  const cachedData = await memcachedClient.get(cacheKey);
-  return cachedData ? JSON.parse(cachedData.value.toString()) : null;
-};
-
 module.exports = {
   uploadToS3,
   generatePresignedUploadUrl,
   generatePresignedDownloadUrl,
-  getFileFromS3,
-  deleteFileFromS3,
   listFilesInS3,
-  cacheFileMetadata,
-  getCachedFileMetadata,
 };

@@ -1,7 +1,10 @@
 const memjs = require('memjs');
 require('dotenv').config();
 
-let memcachedClient;
+const memcachedClient = memjs.Client.create('n11521147-a2-ech.km2jzi.cfg.apse2.cache.amazonaws.com:11211', {
+    timeout: 5000, // Timeout in milliseconds (adjust as necessary)
+    retries: 5, // Number of retries before failure
+  });
 
 const initializeMemcachedClient = async () => {
     if (memcachedClient) {

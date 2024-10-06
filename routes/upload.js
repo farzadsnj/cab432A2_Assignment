@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../auth.js');
-const { saveUserActivity, saveFileMetadata, saveProgress } = require('../db/database.js');
+const { saveUserActivity, saveFileMetadata, saveProgress, getFileMetadata } = require('../db/database.js'); // Ensure getFileMetadata is imported
 const { transcodeVideoWithProgress } = require('../transcode');
 
+// Route for uploading and processing video files
 router.post('/', auth.authenticateToken, async (req, res) => {
   const { fileName } = req.body;
   const username = req.user.username;
@@ -15,45 +16,41 @@ router.post('/', auth.authenticateToken, async (req, res) => {
   const progressId = `${username}_${Date.now()}`;
 
   try {
-    await saveUserActivity(
-      username,
-      `Started processing file: ${fileName}`
-    );
+    // Log the user's activity
+    await saveUserActivity(username, `Started processing file: ${fileName}`);
 
     const fileMetadata = {
-      fileName: fileName,
-      size: null, 
+      fileName,
+      size: null, // Assuming you may add file size later
       uploadTime: new Date().toISOString(),
       user: username,
-      progressId: progressId,
+      progressId,
       status: 'uploaded',
     };
+
+    // Save file metadata and initial progress state
     await saveFileMetadata(fileMetadata);
     await saveProgress(progressId, 0, 'started');
 
+    // Start video transcoding with progress tracking
     transcodeVideoWithProgress(fileName, progressId, username)
       .then(() => {
+        // Update progress and log activity when transcoding completes
         saveProgress(progressId, 100, 'completed');
-        saveUserActivity(
-          username,
-          `Transcoding completed for file: ${fileName}`
-        );
+        saveUserActivity(username, `Transcoding completed for file: ${fileName}`);
         console.log(`Transcoding completed for ${fileName}`);
       })
       .catch((err) => {
+        // Handle transcoding errors
         console.error(`Transcoding failed for ${fileName}:`, err);
         saveProgress(progressId, 0, 'error');
-        saveUserActivity(
-          username,
-          `Transcoding failed for file: ${fileName}`
-        );
+        saveUserActivity(username, `Transcoding failed for file: ${fileName}`);
       });
 
     res.status(201).json({
-      message:
-        'File metadata saved. Transcoding has started.',
-      fileName: fileName,
-      progressId: progressId,
+      message: 'File metadata saved. Transcoding has started.',
+      fileName,
+      progressId,
     });
   } catch (err) {
     console.error('Error handling upload:', err);
@@ -61,23 +58,26 @@ router.post('/', auth.authenticateToken, async (req, res) => {
   }
 });
 
-// Add this in upload.js or a new API route file
+// Route to fetch the list of uploaded files and their metadata
 router.get('/files', auth.authenticateToken, async (req, res) => {
   const username = req.user.username;
 
   try {
-    const files = await getFileMetadata(username); // Call the database function to get file metadata
+    const files = await getFileMetadata(username);
 
-    if (files.length === 0) {
+    // Debugging logs to check if files are being returned
+    console.log('Files retrieved for user:', username, files);
+
+    if (!files || files.length === 0) {
       return res.status(200).json({
         message: 'No files uploaded yet.',
-        files: []
+        files: [],
       });
     }
 
     res.status(200).json({
       message: 'Files fetched successfully.',
-      files: files,
+      files,
     });
   } catch (err) {
     console.error('Error fetching files:', err);
@@ -86,6 +86,5 @@ router.get('/files', auth.authenticateToken, async (req, res) => {
     });
   }
 });
-
 
 module.exports = router;

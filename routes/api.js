@@ -23,6 +23,7 @@ const {
 } = require('./s3_upload');
 const { getWeatherData } = require('./weather.js');
 
+// Limit login attempts to prevent brute-force attacks
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, 
   max: 5, 
@@ -31,6 +32,7 @@ const loginLimiter = rateLimit({
   headers: true,
 });
 
+// Login Route
 router.post('/login', loginLimiter, async (req, res) => {
   const { username, password } = req.body;
 
@@ -61,7 +63,6 @@ router.post('/login', loginLimiter, async (req, res) => {
       httpOnly: true,
       sameSite: 'Lax',
       path: '/',
-
     });
     res.cookie('username', username, {
       httpOnly: false,
@@ -76,6 +77,7 @@ router.post('/login', loginLimiter, async (req, res) => {
   }
 });
 
+// Registration Route
 router.post('/register', loginLimiter, async (req, res) => {
   const { username, password } = req.body;
 
@@ -114,6 +116,7 @@ router.post('/register', loginLimiter, async (req, res) => {
   }
 });
 
+// Confirm Sign-Up Route
 router.post('/confirm', async (req, res) => {
   const { username, confirmationCode } = req.body;
 
@@ -147,6 +150,7 @@ router.post('/confirm', async (req, res) => {
   }
 });
 
+// Admin: Fetch All Files
 router.get('/admin/files', authenticateToken, authorizeAdmin, async (req, res) => {
   try {
     const files = await getAllFiles();
@@ -163,6 +167,7 @@ router.get('/admin/files', authenticateToken, authorizeAdmin, async (req, res) =
   }
 });
 
+// Admin: Delete File
 router.post('/admin/delete-file', authenticateToken, authorizeAdmin, async (req, res) => {
   const { username, fileName } = req.body;
 
@@ -185,6 +190,7 @@ router.post('/admin/delete-file', authenticateToken, authorizeAdmin, async (req,
   }
 });
 
+// Admin: Fetch All Users
 router.get('/admin/users', authenticateToken, authorizeAdmin, async (req, res) => {
   try {
     const users = await getAllUsers();
@@ -200,7 +206,7 @@ router.get('/admin/users', authenticateToken, authorizeAdmin, async (req, res) =
   }
 });
 
-router.use('/upload', require('./upload.js'));
+// Fetch files for a specific user with progress
 router.get('/files', authenticateToken, async (req, res) => {
   try {
     const username = req.user.username;
@@ -233,6 +239,7 @@ router.get('/files', authenticateToken, async (req, res) => {
   }
 });
 
+// Generate presigned URL for uploading files to S3
 router.get('/upload-url', authenticateToken, async (req, res) => {
   const { fileName } = req.query;
   const username = req.user.username;
@@ -253,6 +260,7 @@ router.get('/upload-url', authenticateToken, async (req, res) => {
   }
 });
 
+// Generate presigned URL for downloading files from S3
 router.get('/download-url', authenticateToken, async (req, res) => {
   const { fileName } = req.query;
   const username = req.user.username;
@@ -273,6 +281,7 @@ router.get('/download-url', authenticateToken, async (req, res) => {
   }
 });
 
+// Fetch progress of transcoding for a file
 router.get('/progress/:progressId', authenticateToken, async (req, res) => {
   const progressId = req.params.progressId;
   const username = req.user.username;
@@ -294,6 +303,7 @@ router.get('/progress/:progressId', authenticateToken, async (req, res) => {
   }
 });
 
+// Fetch weather data (for example purpose)
 router.get('/weather', async (req, res) => {
   const city = req.query.city || 'Brisbane'; 
 

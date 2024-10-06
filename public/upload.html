@@ -82,13 +82,13 @@
               document.getElementById('progressBar').value = percentComplete;
               document.getElementById('progressText').textContent =
                 percentComplete + '%';
-              document.getElementById('progressContainer').style.display = 'block';
+              document.getElementById('progressContainer').style.display =
+                'block';
             }
           };
 
           xhr.onload = async function () {
             if (xhr.status === 200) {
-
               const notifyResponse = await fetch('/api/v1/upload', {
                 method: 'POST',
                 credentials: 'include',
@@ -108,6 +108,9 @@
                 if (notifyData.progressId) {
                   monitorTranscodingProgress(notifyData.progressId);
                 }
+
+                // Call fetchFiles to refresh file list
+                fetchFiles();
               } else {
                 const errorData = await notifyResponse.json();
                 throw new Error(`Failed to notify server: ${errorData.error}`);
@@ -154,7 +157,7 @@
           clearInterval(intervalId);
           console.error('Error monitoring progress:', error);
         }
-      }, 2000); 
+      }, 2000);
     }
 
     async function fetchFiles() {
@@ -163,10 +166,6 @@
           credentials: 'include',
         });
 
-        if (response.status === 403) {
-          throw new Error('Forbidden: Invalid token or not authorized.');
-        }
-
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.error || 'Unknown error occurred');
@@ -174,21 +173,24 @@
 
         const data = await response.json();
         const fileList = document.getElementById('fileList');
-        fileList.innerHTML = '';
+        fileList.innerHTML = ''; // Clear previous list
 
+        // If files are present, render them
         if (data.files && data.files.length > 0) {
           data.files.forEach((file) => {
             const li = document.createElement('li');
             const encodedFileName = encodeURIComponent(file.fileName);
 
             li.innerHTML = `
-              ${file.fileName} (${file.progress || 0}%)
+              <span><strong>File:</strong> ${file.fileName}</span>
+              <span>(${file.progress || 0}% completed)</span>
               <button class="btn" onclick="downloadFile('${encodedFileName}')">Download</button>
             `;
             fileList.appendChild(li);
           });
         } else {
-          fileList.textContent = 'No files uploaded yet.';
+          // If no files are present, show a message
+          fileList.innerHTML = '<li>No files uploaded yet.</li>';
         }
       } catch (error) {
         console.error('Error fetching files:', error);
@@ -207,14 +209,14 @@
         const data = await response.json();
         const downloadUrl = data.url;
 
-        window.location.href = downloadUrl;
+        window.location.href = downloadUrl; // Trigger the download
       } catch (error) {
         console.error('Error downloading file:', error);
         alert('Error downloading file.');
       }
     }
 
-    fetchFiles();
+    fetchFiles(); // Call to initially populate the file list
 
     const username = getCookie('username');
     const userLabel = document.getElementById('user-label');
@@ -226,8 +228,7 @@
     function getCookie(name) {
       const value = `; ${document.cookie}`;
       const parts = value.split(`; ${name}=`);
-      if (parts.length === 2)
-        return parts.pop().split(';').shift();
+      if (parts.length === 2) return parts.pop().split(';').shift();
       return null;
     }
   </script>
