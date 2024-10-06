@@ -20,11 +20,6 @@ const initializeS3 = async () => {
     const config = await loadConfig();
     s3Client = new S3Client({
       region: config.awsRegion,
-      credentials: {
-        accessKeyId: config.awsAccessKeyId,
-        secretAccessKey: config.awsSecretAccessKey,
-        sessionToken: config.awsSessionToken,
-      },
     });
     bucketName = config.s3BucketName;
     console.log('S3 client initialized successfully.');
