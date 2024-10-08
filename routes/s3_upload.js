@@ -130,7 +130,18 @@ const listFilesInS3 = async (username) => {
     const command = new ListObjectsV2Command(listParams);
     const response = await s3Client.send(command);
 
-    return response.Contents.map((file) => file.Key);
+    // Generate signed URLs for each file for downloading
+    const files = await Promise.all(
+      response.Contents.map(async (file) => {
+        const downloadUrl = await generatePresignedDownloadUrl(file.Key, username);
+        return {
+          fileName: file.Key.split('/').pop(),
+          downloadUrl,
+        };
+      })
+    );
+
+    return files;
   } catch (err) {
     console.error('Error listing files in S3:', err);
     throw new Error('Failed to list files in S3');

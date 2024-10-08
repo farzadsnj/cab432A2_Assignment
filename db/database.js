@@ -1,8 +1,6 @@
-// database.js
 const { 
     DynamoDBClient, 
     PutItemCommand, 
-    GetItemCommand, 
     QueryCommand, 
     DeleteItemCommand, 
     ScanCommand 
@@ -21,9 +19,9 @@ require("dotenv").config();
 
 let dynamodb;
 let dynamoDbDocumentClient;
-let config;
-const TABLE_NAME = process.env.DYNAMODB_TABLE_NAME || "app_data";
 let memcachedClient; // Changed from Redis to Memcached
+
+const TABLE_NAME = process.env.DYNAMODB_TABLE_NAME || "app_data";
 
 // Initialize the Memcached client (formerly Redis)
 const initializeCache = async () => { 
@@ -36,26 +34,17 @@ initializeCache().catch((err) => {
     console.error('Failed to initialize Memcached:', err);
 });
 
-// Initialize DynamoDB client
+// Initialize DynamoDB client (now correctly ordered)
 const initializeDynamoDB = async () => {
     try {
         const config = await loadConfig();
-
-        // Fix the undefined credentials issue
-        const credentials = {
-            accessKeyId: config.awsAccessKeyId,
-            secretAccessKey: config.awsSecretAccessKey,
-        };
-
-        if (config.awsSessionToken) {
-            credentials.sessionToken = config.awsSessionToken;
-        }
-
+        
+        // Initialize the DynamoDB client with region (IAM Role will be used automatically)
         dynamodb = new DynamoDBClient({
-            region: config.awsRegion,
-            credentials: credentials, // Credentials now defined properly
+            region: config.awsRegion
         });
 
+        // Initialize the DynamoDB Document client
         dynamoDbDocumentClient = DynamoDBDocumentClient.from(dynamodb);
 
         console.log('DynamoDB client initialized successfully');
@@ -285,7 +274,7 @@ const deleteFile = async (username, fileName) => {
 const getAllUsers = async () => {
     const params = {
         TableName: TABLE_NAME,
-        FilterExpression: 'attribute_exists(username)',
+        FilterExpression: 'attribute_exists(username)', // Filter to get only users with a username
     };
 
     try {
@@ -298,6 +287,8 @@ const getAllUsers = async () => {
 
         const users = data.Items.map(item => unmarshall(item));
         const uniqueUsers = {};
+
+        // Ensure each user has a unique username and format the output
         users.forEach(user => {
             if (user.username) {
                 uniqueUsers[user.username] = {
@@ -307,6 +298,7 @@ const getAllUsers = async () => {
             }
         });
 
+        // Return the formatted list of unique users
         return Object.values(uniqueUsers);
     } catch (err) {
         console.error('Error fetching all users:', err.stack || err);
@@ -314,6 +306,7 @@ const getAllUsers = async () => {
     }
 };
 
+// Exported functions
 module.exports = {
     saveUser,
     saveUserActivity,

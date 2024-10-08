@@ -3,6 +3,7 @@ const router = express.Router();
 const auth = require('../auth.js');
 const { saveUserActivity, saveFileMetadata, saveProgress, getFileMetadata } = require('../db/database.js'); // Ensure getFileMetadata is imported
 const { transcodeVideoWithProgress } = require('../transcode');
+const { listFilesInS3 } = require('./s3_upload.js');
 
 router.post('/', auth.authenticateToken, async (req, res) => {
   const { fileName } = req.body;
@@ -57,12 +58,11 @@ router.post('/', auth.authenticateToken, async (req, res) => {
   }
 });
 
-// Route to fetch the list of uploaded files and their metadata
 router.get('/files', auth.authenticateToken, async (req, res) => {
   const username = req.user.username;
 
   try {
-    const files = await getFileMetadata(username);
+    const files = await listFilesInS3(username); // Fetch files with download URLs
 
     // Debugging logs to check if files are being returned
     console.log('Files retrieved for user:', username, files);
@@ -76,7 +76,7 @@ router.get('/files', auth.authenticateToken, async (req, res) => {
 
     res.status(200).json({
       message: 'Files fetched successfully.',
-      files,
+      files, // Return files with URLs for front-end use
     });
   } catch (err) {
     console.error('Error fetching files:', err);

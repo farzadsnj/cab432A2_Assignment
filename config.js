@@ -11,7 +11,7 @@ require("dotenv").config();
 
 const awsRegion = process.env.AWS_REGION || "ap-southeast-2";
 
-// Initialize AWS clients
+// Initialize AWS clients (no explicit credentials needed, IAM role will be used)
 const secretsManager = new SecretsManagerClient({ region: awsRegion });
 const ssmClient = new SSMClient({ region: awsRegion });
 
@@ -50,9 +50,7 @@ const loadConfig = async () => {
   try {
     const secrets = await getSecret(process.env.AWS_SECRETS_NAME);
 
-    // Determine whether to use explicit credentials or rely on IAM role
-    const useCredentials = !!process.env.AWS_ACCESS_KEY_ID && !!process.env.AWS_SECRET_ACCESS_KEY;
-
+    // Load configuration without explicit credentials, relying on IAM roles
     const config = {
       awsRegion: awsRegion,
       cognitoClientId: secrets.cognitoClientId || process.env.COGNITO_CLIENT_ID,
@@ -62,13 +60,6 @@ const loadConfig = async () => {
       ),
       dynamoDbTableName: process.env.DYNAMODB_TABLE_NAME,
       redisUrl: process.env.NODE_ENV === 'development' ? process.env.REDIS_URL_LOCAL : process.env.REDIS_URL_CLOUD,
-      credentials: useCredentials
-        ? {
-            accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-            sessionToken: process.env.AWS_SESSION_TOKEN,
-          }
-        : null, // No credentials necessary for role-based access
     };
 
     console.log("Configuration loaded successfully.");

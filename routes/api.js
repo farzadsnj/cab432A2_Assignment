@@ -27,8 +27,7 @@ const { getWeatherData } = require('./weather.js');
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, 
   max: 5, 
-  message:
-    'Too many attempts from this IP, please try again after 15 minutes.',
+  message: 'Too many attempts from this IP, please try again after 15 minutes.',
   headers: true,
 });
 
@@ -200,6 +199,8 @@ router.get('/files', authenticateToken, async (req, res) => {
     const username = req.user.username;
     const files = await getFileMetadata(username);
 
+    console.log("Files retrieved from database: ", files); // Debugging
+
     if (!files.length) {
       return res.status(404).json({ message: 'No files found for the user.' });
     }
@@ -211,6 +212,8 @@ router.get('/files', authenticateToken, async (req, res) => {
         return { ...file, progress };
       })
     );
+
+    console.log("Files with progress data: ", filesWithProgress); // Debugging
 
     res.status(200).json({
       message: 'Files metadata and progress listed successfully.',
