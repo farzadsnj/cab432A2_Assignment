@@ -1,0 +1,6 @@
+node_modules/
+.env
+keyPair/
+.DS_Store
+.vscode/
+aws/
