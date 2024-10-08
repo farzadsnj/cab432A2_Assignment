@@ -2,4 +2,9 @@ node_modules/
 .env
 keyPair/
 .DS_Store
+<<<<<<< HEAD
 .vscode/
+=======
+.vscode/
+aws/
+>>>>>>> a2222_repo/main

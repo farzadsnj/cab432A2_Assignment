@@ -1,9 +1,16 @@
+<<<<<<< HEAD
 
+=======
+>>>>>>> a2222_repo/main
 # A2 Response to Criteria
 
 ## Core - First Data Persistence Service
 S3 is used for storing video files. In the AWS console, S3 is configured to handle video file storage, and video files are uploaded through the application.
+<<<<<<< HEAD
 - **Details Page**: The S3 bucket created is named `my-app-videos`.
+=======
+- **Details Page**: The S3 bucket created is named `3770017-hd_1920_1080_25fps.mp4`.
+>>>>>>> a2222_repo/main
 - **Stored Data**: The video files uploaded by users are stored in this S3 bucket.
 
 ## Core - Second Data Persistence Service
@@ -39,7 +46,11 @@ Cognito is used for user authentication. Users are registered in a user pool, an
 
 ## Route 53 DNS
 The application is accessed using a custom subdomain configured with Route 53.
+<<<<<<< HEAD
 - **Subdomain**: The subdomain `app.myapp.com` points to the EC2 instance running the application.
+=======
+- **Subdomain**: The subdomain `n11521147a22.cab432.com` points to the EC2 instance running the application.
+>>>>>>> a2222_repo/main
 
 ## Custom Security Groups
 Custom security groups are created and assigned to the EC2 instance and RDS.
@@ -53,4 +64,7 @@ The application uses AWS Parameter Store to manage environment variables like da
 ## Secrets Manager
 Secrets Manager is used to store sensitive information like API keys.
 - **Secrets**: The API key for a third-party video processing service is stored securely in Secrets Manager.
+<<<<<<< HEAD
 
+=======
+>>>>>>> a2222_repo/main

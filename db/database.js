@@ -1,8 +1,14 @@
+<<<<<<< HEAD
 // database.js
 const { 
     DynamoDBClient, 
     PutItemCommand, 
     GetItemCommand, 
+=======
+const { 
+    DynamoDBClient, 
+    PutItemCommand, 
+>>>>>>> a2222_repo/main
     QueryCommand, 
     DeleteItemCommand, 
     ScanCommand 
@@ -21,10 +27,17 @@ require("dotenv").config();
 
 let dynamodb;
 let dynamoDbDocumentClient;
+<<<<<<< HEAD
 let config;
 const TABLE_NAME = process.env.DYNAMODB_TABLE_NAME || "app_data";
 let memcachedClient; // Changed from Redis to Memcached
 
+=======
+let memcachedClient; // Changed from Redis to Memcached
+
+const TABLE_NAME = process.env.DYNAMODB_TABLE_NAME || "app_data";
+
+>>>>>>> a2222_repo/main
 // Initialize the Memcached client (formerly Redis)
 const initializeCache = async () => { 
     memcachedClient = await initializeMemcachedClient(); 
@@ -36,6 +49,7 @@ initializeCache().catch((err) => {
     console.error('Failed to initialize Memcached:', err);
 });
 
+<<<<<<< HEAD
 // Initialize DynamoDB client
 const initializeDynamoDB = async () => {
     try {
@@ -55,6 +69,19 @@ const initializeDynamoDB = async () => {
             credentials: credentials,
         });
 
+=======
+// Initialize DynamoDB client (now correctly ordered)
+const initializeDynamoDB = async () => {
+    try {
+        const config = await loadConfig();
+        
+        // Initialize the DynamoDB client with region (IAM Role will be used automatically)
+        dynamodb = new DynamoDBClient({
+            region: config.awsRegion
+        });
+
+        // Initialize the DynamoDB Document client
+>>>>>>> a2222_repo/main
         dynamoDbDocumentClient = DynamoDBDocumentClient.from(dynamodb);
 
         console.log('DynamoDB client initialized successfully');
@@ -284,7 +311,11 @@ const deleteFile = async (username, fileName) => {
 const getAllUsers = async () => {
     const params = {
         TableName: TABLE_NAME,
+<<<<<<< HEAD
         FilterExpression: 'attribute_exists(username)',
+=======
+        FilterExpression: 'attribute_exists(username)', // Filter to get only users with a username
+>>>>>>> a2222_repo/main
     };
 
     try {
@@ -297,6 +328,11 @@ const getAllUsers = async () => {
 
         const users = data.Items.map(item => unmarshall(item));
         const uniqueUsers = {};
+<<<<<<< HEAD
+=======
+
+        // Ensure each user has a unique username and format the output
+>>>>>>> a2222_repo/main
         users.forEach(user => {
             if (user.username) {
                 uniqueUsers[user.username] = {
@@ -306,6 +342,10 @@ const getAllUsers = async () => {
             }
         });
 
+<<<<<<< HEAD
+=======
+        // Return the formatted list of unique users
+>>>>>>> a2222_repo/main
         return Object.values(uniqueUsers);
     } catch (err) {
         console.error('Error fetching all users:', err.stack || err);
@@ -313,6 +353,10 @@ const getAllUsers = async () => {
     }
 };
 
+<<<<<<< HEAD
+=======
+// Exported functions
+>>>>>>> a2222_repo/main
 module.exports = {
     saveUser,
     saveUserActivity,

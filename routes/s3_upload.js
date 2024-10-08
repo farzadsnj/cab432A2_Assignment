@@ -19,10 +19,13 @@ const initializeS3 = async () => {
     const config = await loadConfig();
     s3Client = new S3Client({
       region: process.env.AWS_REGION,
+<<<<<<< HEAD
       credentials: {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID,
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
       },
+=======
+>>>>>>> a2222_repo/main
     });
     bucketName = config.s3BucketName;
     console.log('S3 client initialized successfully.');
@@ -104,6 +107,28 @@ const generatePresignedDownloadUrl = async (fileName, username) => {
   }
 };
 
+<<<<<<< HEAD
+=======
+// Retrieve a file from S3
+const getObjectFromS3 = async (fileName, username) => {
+  try {
+    const s3Key = `${username}/${fileName}`;
+    const downloadParams = {
+      Bucket: bucketName,
+      Key: s3Key,
+    };
+
+    const command = new GetObjectCommand(downloadParams);
+    const data = await s3Client.send(command);
+
+    return data;
+  } catch (err) {
+    console.error('Error fetching object from S3:', err);
+    throw new Error('Failed to fetch object from S3');
+  }
+};
+
+>>>>>>> a2222_repo/main
 // List files in S3 for a specific user
 const listFilesInS3 = async (username) => {
   try {
@@ -115,7 +140,22 @@ const listFilesInS3 = async (username) => {
     const command = new ListObjectsV2Command(listParams);
     const response = await s3Client.send(command);
 
+<<<<<<< HEAD
     return response.Contents.map((file) => file.Key);
+=======
+    // Generate signed URLs for each file for downloading
+    const files = await Promise.all(
+      response.Contents.map(async (file) => {
+        const downloadUrl = await generatePresignedDownloadUrl(file.Key, username);
+        return {
+          fileName: file.Key.split('/').pop(),
+          downloadUrl,
+        };
+      })
+    );
+
+    return files;
+>>>>>>> a2222_repo/main
   } catch (err) {
     console.error('Error listing files in S3:', err);
     throw new Error('Failed to list files in S3');
@@ -126,5 +166,9 @@ module.exports = {
   uploadToS3,
   generatePresignedUploadUrl,
   generatePresignedDownloadUrl,
+<<<<<<< HEAD
+=======
+  getObjectFromS3, // Make sure this function is exported
+>>>>>>> a2222_repo/main
   listFilesInS3,
 };
