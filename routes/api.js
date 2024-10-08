@@ -27,8 +27,12 @@ const { getWeatherData } = require('./weather.js');
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, 
   max: 5, 
+<<<<<<< HEAD
   message:
     'Too many attempts from this IP, please try again after 15 minutes.',
+=======
+  message: 'Too many attempts from this IP, please try again after 15 minutes.',
+>>>>>>> a2222_repo/main
   headers: true,
 });
 
@@ -40,10 +44,13 @@ router.post('/login', loginLimiter, async (req, res) => {
     const config = await loadConfig();
     const cognitoClient = new CognitoIdentityProviderClient({
       region: config.awsRegion,
+<<<<<<< HEAD
       credentials: {
         accessKeyId: config.awsAccessKeyId,
         secretAccessKey: config.awsSecretAccessKey,
       },
+=======
+>>>>>>> a2222_repo/main
     });
 
     const params = {
@@ -86,10 +93,13 @@ router.post('/register', loginLimiter, async (req, res) => {
 
     const cognitoClient = new CognitoIdentityProviderClient({
       region: config.awsRegion,
+<<<<<<< HEAD
       credentials: {
         accessKeyId: config.awsAccessKeyId,
         secretAccessKey: config.awsSecretAccessKey,
       },
+=======
+>>>>>>> a2222_repo/main
     });
 
     const params = {
@@ -124,10 +134,13 @@ router.post('/confirm', async (req, res) => {
     const config = await loadConfig();
     const cognitoClient = new CognitoIdentityProviderClient({
       region: config.awsRegion,
+<<<<<<< HEAD
       credentials: {
         accessKeyId: config.awsAccessKeyId,
         secretAccessKey: config.awsSecretAccessKey,
       },
+=======
+>>>>>>> a2222_repo/main
     });
 
     const params = {
@@ -212,6 +225,11 @@ router.get('/files', authenticateToken, async (req, res) => {
     const username = req.user.username;
     const files = await getFileMetadata(username);
 
+<<<<<<< HEAD
+=======
+    console.log("Files retrieved from database: ", files); // Debugging
+
+>>>>>>> a2222_repo/main
     if (!files.length) {
       return res.status(404).json({ message: 'No files found for the user.' });
     }
@@ -224,6 +242,11 @@ router.get('/files', authenticateToken, async (req, res) => {
       })
     );
 
+<<<<<<< HEAD
+=======
+    console.log("Files with progress data: ", filesWithProgress); // Debugging
+
+>>>>>>> a2222_repo/main
     res.status(200).json({
       message: 'Files metadata and progress listed successfully.',
       files: filesWithProgress,

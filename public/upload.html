@@ -165,22 +165,40 @@
         const response = await fetch('/api/v1/files', {
           credentials: 'include',
         });
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> a2222_repo/main
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.error || 'Unknown error occurred');
         }
+<<<<<<< HEAD
 
         const data = await response.json();
         const fileList = document.getElementById('fileList');
         fileList.innerHTML = ''; // Clear previous list
 
+=======
+    
+        const data = await response.json();
+        console.log("Files fetched from server: ", data.files); // Add this log
+    
+        const fileList = document.getElementById('fileList');
+        fileList.innerHTML = ''; // Clear previous list
+    
+>>>>>>> a2222_repo/main
         // If files are present, render them
         if (data.files && data.files.length > 0) {
           data.files.forEach((file) => {
             const li = document.createElement('li');
             const encodedFileName = encodeURIComponent(file.fileName);
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> a2222_repo/main
             li.innerHTML = `
               <span><strong>File:</strong> ${file.fileName}</span>
               <span>(${file.progress || 0}% completed)</span>
@@ -196,7 +214,11 @@
         console.error('Error fetching files:', error);
         document.getElementById('uploadStatus').textContent = error.message;
       }
+<<<<<<< HEAD
     }
+=======
+    }        
+>>>>>>> a2222_repo/main
 
     async function downloadFile(fileName) {
       try {
